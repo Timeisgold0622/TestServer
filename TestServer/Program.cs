@@ -2,20 +2,30 @@
 {
     class Program
     {
-        static void MainThread(object state)
+        volatile static bool _stop = false; // volatile : 잘 변할 수 있는 얘 니까 컴파일러보고 관련된거 최적화 하지 말라한거
+
+        static void ThreadMain()
         {
-            for (int i = 0; i < 10; i++) {
-                Console.WriteLine("Hello, Thread!");
+            Console.WriteLine("쓰레드 시작");
+            while (_stop == false)
+            {
+                // 누군가가 stop 신호를 해주길 기다린다.
             }
+            Console.WriteLine("쓰레드 종료");
         }
         static void Main(string[] args)
         {
-            ThreadPool.SetMinThreads(1, 1); // 최소 스레드 수
-            ThreadPool.SetMaxThreads(5, 5); // 최대 스레드 수
+            Task t = new Task(ThreadMain);
+            t.Start();
 
-            Task t = new Task(() => {while (true) { } }, TaskCreationOptions.LongRunning); // LongRunning 인자로 인해서 먹통되지 않음.
+            Thread.Sleep(1000); // 1초 동안 중단했다가 다시 실행됨
 
-            ThreadPool.QueueUserWorkItem(MainThread); // 필요할때 호출하는 Thread + 갯수 제한 있음
+            _stop = true;
+
+            Console.WriteLine("Stop 호출");
+            Console.WriteLine("종료 대기 중");
+            t.Wait(); // task가 끝남을 알림 (join과 같음)
+            Console.WriteLine("종료 성공");
         }
     }
 }
