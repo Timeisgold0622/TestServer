@@ -2,22 +2,17 @@
 {
     class Program
     {
-        static void MainThread()
+        static void MainThread(object state)
         {
-            while (true)
-            {
+            for (int i = 0; i < 10; i++) {
                 Console.WriteLine("Hello, Thread!");
             }
         }
         static void Main(string[] args)
         {
-            Thread t = new Thread(MainThread);
-            t.Name = "Test Thread";
-            t.IsBackground = true;
-            t.Start();
-            Console.WriteLine("Wating for Thread!");
-            t.Join();
-            Console.WriteLine("Hello, World!");
+            ThreadPool.SetMinThreads(1, 1); // 최소 스레드 수
+            ThreadPool.SetMaxThreads(5, 5); // 최대 스레드 수
+            ThreadPool.QueueUserWorkItem(MainThread); // 필요할때 호출하는 Thread + 갯수 제한 있음
         }
     }
 }
