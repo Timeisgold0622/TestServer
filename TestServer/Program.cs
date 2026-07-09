@@ -2,30 +2,41 @@
 {
     class Program
     {
-        volatile static bool _stop = false; // volatile : 잘 변할 수 있는 얘 니까 컴파일러보고 관련된거 최적화 하지 말라한거
+        static int x = 0;
+        static int y = 0;
+        static int r1 = 0;
+        static int r2 = 0;
 
-        static void ThreadMain()
+        static void Thread_1()
         {
-            Console.WriteLine("쓰레드 시작");
-            while (_stop == false)
-            {
-                // 누군가가 stop 신호를 해주길 기다린다.
-            }
-            Console.WriteLine("쓰레드 종료");
+            y = 1; // Store y
+            r1 = x; // Load x
+        }
+
+        static void Thread_2()
+        {
+            x = 1;
+            r2 = y;
         }
         static void Main(string[] args)
         {
-            Task t = new Task(ThreadMain);
-            t.Start();
+            int count = 0;
+            while (true)
+            {
+                count++;
+                x = y = r1 = r2 = 0;
 
-            Thread.Sleep(1000); // 1초 동안 중단했다가 다시 실행됨
+                Task t1 = new Task(Thread_1);
+                Task t2 = new Task(Thread_2);
 
-            _stop = true;
+                Task.WaitAll(t1, t2);
 
-            Console.WriteLine("Stop 호출");
-            Console.WriteLine("종료 대기 중");
-            t.Wait(); // task가 끝남을 알림 (join과 같음)
-            Console.WriteLine("종료 성공");
+                if (r1 == 0 && r2 == 0)
+                {
+                    break;
+                }
+            }
+            Console.WriteLine($"{count}번만에 빠져나옴");
         }
     }
 }
