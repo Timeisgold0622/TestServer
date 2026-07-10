@@ -2,42 +2,29 @@
 {
     class Program
     {
-        static int _num = 0;
-        static Mutex _lock = new Mutex();
-        // Mutex 또한 커널 동기화 개체임
-        // Mutex는 여러 종류의 데이터를 가지고 있어서 ResetEvent들과는 다름
-        // 대표적으로 락 횟수와 스레드 아이디 가지고, 릴리스 에러도 잡음
-
-        static void Thread_1()
-        {
-            for (int i = 0; i < 10000; i++)
-            {
-                _lock.WaitOne();
-                _num++;
-                _lock.ReleaseMutex();
-            }
-        }
-
-        static void Thread_2()
-        {
-            for (int i = 0; i < 10000; i++)
-            {
-                _lock.WaitOne();
-                _num--;
-                _lock.ReleaseMutex();
-            }
-        }
+        static object _lock = new object();
+        static SpinLock _lock2 = new SpinLock();
+        // C#에서 제공하는 SpinLock은 기본적으로 근성 즉, 자기가 계속 스레드를 쓰긴 하지만
+        // 도저히 답이 없는 거 같으면 양보를 하기도 함
         static void Main(string[] args)
         {
-            Task t1 = new Task(Thread_1);
-            Task t2 = new Task(Thread_1);
+            lock (_lock)
+            {
 
-            t1.Start();
-            t2.Start();
+            }
 
-            Task.WaitAll(t1, t2);
+            bool lockTaken = false;
 
-            Console.WriteLine(_num);
+            try
+            {
+                _lock2.Enter(ref lockTaken);
+            }
+            finally
+            {
+                if (lockTaken){
+                    _lock2.Exit();
+                }
+            }
         }
     }
 }
