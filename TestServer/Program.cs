@@ -2,38 +2,16 @@
 {
     class SpinLock
     {
-        volatile int _locked = 0; 
+        // bool <- 커널
+        AutoResetEvent _available = new AutoResetEvent(true);
         public void Acquire()
         {
-            while(true)
-            {
-                // Exchange를 이용한 원자적 연산
-                /* 대충 original 값하고 locked를 비교해서 중첩 확인 */
-                //int original = Interlocked.Exchange(ref _locked, 1);
-                //if (original == 0)
-                //{
-                //    break;
-                //}
-
-                // ComapreExchange : 1번과 3번 인자를 비교해서 둘이 같으면 2번 값을 넣음
-                // CAS (compare and swap)
-                int original = Interlocked.CompareExchange(ref _locked, 1, 0);
-                if (original == 0)
-                {
-                    break;
-                }
-
-                /*
-                // 쉬다 오는 얘들
-                Thread.Sleep(1); // 무조건 휴식 => 무조건 1ms 정도 쉼 (물론 운영체제 스케쥴러가 좀 시간을 바꾸기도 함)
-                Thread.Sleep(0); // 조건부 양보 => 나보다 우선순위가 낮은 얘들한테는 양보 불가 => 우선순위가 나보다 같거나 높은 스레드가 없으면 다시 본인한테
-                Thread.Yield(); // 관대한 양보 => 관대하게 양보 => 지금 실행이 가능한 스레드가 있으면 실행하세요 => 실행 가능한 애가 없으면 남은 시간 소진
-                */
-            }
+            _available.WaitOne(); // 입장 시도
+            // _available.Reset(); // bool -> false (이부분이 WaitOne에 포함되어 있음)
         }
         public void Release()
         {
-            _locked = false;
+            _available.Set(); // flag = true
         }
     }
     class Program
@@ -43,7 +21,7 @@
 
         static void Thread_1()
         {
-            for (int i = 0; i < _num; i++)
+            for (int i = 0; i < 10000; i++)
             {
                 _lock.Acquire();
                 _num++;
@@ -53,7 +31,7 @@
 
         static void Thread_2()
         {
-            for (int i = 0; i < _num; i++)
+            for (int i = 0; i < 10000; i++)
             {
                 _lock.Acquire();
                 _num--;
