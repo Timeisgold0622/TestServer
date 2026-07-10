@@ -3,12 +3,23 @@
     class Program
     {
         static int number = 0;
+        static object _obj = new object();
 
         static void Thread_1()
         {
             for (int i = 0; i < number; i++)
             {
-                Interlocked.Increment(ref number); // 1
+
+                lock (_obj) // 아래랑 같은 코드인데 이제 잠금을 못푸는 경우를 방지해주는 구문
+                {
+                    number++;
+                }
+                // 상호 배체 Mutual Exclusive
+
+                // CriticalSection, std::mutex
+                Monitor.Enter(_obj); // 문을 잠구는 행위
+                number++;
+                Monitor.Exit(_obj); // 잠금을 풀어줌
             }
         }
 
@@ -16,7 +27,9 @@
         {
             for (int i = 0; i < number; i++)
             {
-                Interlocked.Decrement(ref number); // 0 
+                Monitor.Enter(_obj);
+                number--;
+                Monitor.Exit(_obj);
             }
         }
         static void Main(string[] args)
