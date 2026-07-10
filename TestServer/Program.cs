@@ -1,32 +1,20 @@
 ﻿namespace TestServer
 {
-    class Lock
-    {
-        // bool <- 커널
-        ManualResetEvent _available = new ManualResetEvent(true);
-        public void Acquire()
-        {
-            _available.WaitOne(); // 입장 시도
-            _available.Reset(); // 자동으로 안해줘서 수동으로 닫아야됨
-            // 근데 이러면 연산이 두개로 분리되서 Race Condition이 나타남 그렇기 떄문에 ManualResetEvent는 여러 개의 스레드를 사용해야될때 쓴다고 볼 수 있음
-        }
-        public void Release()
-        {
-            _available.Set(); // flag = true
-        }
-    }
     class Program
     {
         static int _num = 0;
-        static Lock _lock = new Lock();
+        static Mutex _lock = new Mutex();
+        // Mutex 또한 커널 동기화 개체임
+        // Mutex는 여러 종류의 데이터를 가지고 있어서 ResetEvent들과는 다름
+        // 대표적으로 락 횟수와 스레드 아이디 가지고, 릴리스 에러도 잡음
 
         static void Thread_1()
         {
             for (int i = 0; i < 10000; i++)
             {
-                _lock.Acquire();
+                _lock.WaitOne();
                 _num++;
-                _lock.Release();
+                _lock.ReleaseMutex();
             }
         }
 
@@ -34,9 +22,9 @@
         {
             for (int i = 0; i < 10000; i++)
             {
-                _lock.Acquire();
+                _lock.WaitOne();
                 _num--;
-                _lock.Release();
+                _lock.ReleaseMutex();
             }
         }
         static void Main(string[] args)
