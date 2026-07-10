@@ -2,29 +2,31 @@
 {
     class Program
     {
-        static object _lock = new object();
-        static SpinLock _lock2 = new SpinLock();
-        // C#에서 제공하는 SpinLock은 기본적으로 근성 즉, 자기가 계속 스레드를 쓰긴 하지만
-        // 도저히 답이 없는 거 같으면 양보를 하기도 함
+        class Reward
+        {
+
+        }
+
+        // RWLock, RenderWriteLock
+        static ReaderWriterLockSlim _lock3 = new ReaderWriterLockSlim(); // Slim 붙은게 더 최신 버전
+
+        static Reward GetRewardByid(int id)
+        {
+            _lock3.EnterReadLock();
+
+            _lock3.ExitReadLock();
+            return null;
+        }
+
+        static void AddReward(Reward reward)
+        {
+            _lock3.EnterWriteLock();
+
+            _lock3.ExitWriteLock();
+        }
         static void Main(string[] args)
         {
-            lock (_lock)
-            {
-
-            }
-
-            bool lockTaken = false;
-
-            try
-            {
-                _lock2.Enter(ref lockTaken);
-            }
-            finally
-            {
-                if (lockTaken){
-                    _lock2.Exit();
-                }
-            }
+            
         }
     }
 }
