@@ -2,15 +2,28 @@
 {
     class SpinLock
     {
-        volatile bool _locked = false; // 가시성
+        volatile int _locked = 0; 
         public void Acquire()
         {
-            while (_locked)
+            while(true)
             {
-                // 잠김이 풀리기를 기다림
-            }
+                // Exchange를 이용한 원자적 연산
+                /* 대충 original 값하고 locked를 비교해서 중첩 확인 */
+                //int original = Interlocked.Exchange(ref _locked, 1);
+                //if (original == 0)
+                //{
+                //    break;
+                //}
 
-            _locked = true;
+                // ComapreExchange : 1번과 3번 인자를 비교해서 둘이 같으면 2번 값을 넣음
+                // CAS (compare and swap)
+                int original = Interlocked.CompareExchange(ref _locked, 1, 0);
+                if (original == 0)
+                {
+                    break;
+                }
+
+            }
         }
         public void Release()
         {
