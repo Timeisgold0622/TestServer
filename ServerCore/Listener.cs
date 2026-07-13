@@ -20,7 +20,7 @@ namespace ServerCore
             _listenSocket.Listen(10);
 
             SocketAsyncEventArgs args = new SocketAsyncEventArgs(); // 한번만 만들어 놓아도 재사용 가능
-            args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+            args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted); // 이벤트 핸들러는 비동기로 새 스레드를 만들어서 호출 시킴(중요)
             RegisterAccept(args); // 초기화 시점에서 등록
         }
 
