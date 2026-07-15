@@ -23,8 +23,12 @@ namespace DummyClient
                 Console.WriteLine($"Connected To {socket.RemoteEndPoint.ToString()}"); //  socket.RemoteEndPoint은 연결한 대상임
 
                 // 보낸다.
-                byte[] sendbuff = Encoding.UTF8.GetBytes("Hello World!");
-                int sendBytes = socket.Send(sendbuff);
+                for (int i = 0; i < 5; ++i)
+                {
+                    byte[] sendbuff = Encoding.UTF8.GetBytes($"Hello World! {i}\n");
+                    int sendBytes = socket.Send(sendbuff);
+                }
+
 
                 // 받는다.
                 byte[] recvBuff = new byte[1024];

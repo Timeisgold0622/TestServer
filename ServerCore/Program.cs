@@ -11,20 +11,16 @@ namespace ServerCore
         {
             try
             {
-                byte[] recvBuff = new byte[1024];
-                int recvBytes = clientSocket.Receive(recvBuff);
-                string recvDatas = Encoding.UTF8.GetString(recvBuff, 0, recvBytes); // 데이터가 중간부터 데이터를 받을 수도 있지만 지금은 그런 경우가 없기 때문에 0부터 받음
-                Console.WriteLine($"[from Client] : {recvDatas}");
+                Session session = new Session();
+                session.Start(clientSocket);
 
-                // 보낸다.
                 byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to ERTServer");
-                clientSocket.Send(sendBuff);
+                session.Send(sendBuff);
 
-                // 쫒아낸다.
-                clientSocket.Shutdown(SocketShutdown.Both);
-                clientSocket.Close();
+                Thread.Sleep(1000);
+                session.Disconnect(); // 쫒아내기
             }
-            catch (Exception e) {
+            catch (Exception e)
             {
                     Console.WriteLine(e.ToString());
             }
