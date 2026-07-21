@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
 namespace ServerCore
 {
-    internal class Session
+    abstract class Session
     {
         Socket _socket;
         int _disconnected = 0; // disconnect 연속 호출 방지용
@@ -16,6 +17,10 @@ namespace ServerCore
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
 
+        public abstract void OnConnected(EndPoint endPoint);
+        public abstract void OnDisconnected(EndPoint endPoint);
+        public abstract void OnRecv(ArraySegment<byte> buffer);
+        public abstract void OnSend(int numOfBytes);
         public void Start(Socket socket)
         {
             _socket = socket;
@@ -42,6 +47,7 @@ namespace ServerCore
         {
             if (Interlocked.Exchange(ref _disconnected, 1) == 1)// 멀티스레드 환경이기 때문에 레이스컨디션 방지용
                 return;
+            OnDisconnected(_socket.RemoteEndPoint);
             _socket.Shutdown(SocketShutdown.Both);
             _socket.Close();
         }
@@ -76,6 +82,9 @@ namespace ServerCore
                     {
                         _sendArgs.BufferList = null;
                         _pendingList.Clear();
+
+                        OnSend(_sendArgs.BytesTransferred);
+
                         if (_sendQueue.Count > 0){
                             RegisterSend();
                         }
@@ -106,9 +115,7 @@ namespace ServerCore
             {
                 try
                 {
-                    string recvdata = Encoding.UTF8.GetString(args.Buffer, args.Offset, args.BytesTransferred); // Offset : 시작 위치, ByteTransferred : 몇 바이트 받았냐
-                    Console.WriteLine($"[From Server] : {recvdata}");
-
+                    OnRecv(new ArraySegment<byte>(args.Buffer, args.Offset, args.BytesTransferred));
                     RegisterRecv();
                 }
                 catch (Exception e)

@@ -1,30 +1,43 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using static System.Collections.Specialized.BitVector32;
 
 namespace ServerCore
 {
+    class GameSession : Session
+    {
+        public override void OnConnected(EndPoint endPoint)
+        {
+            Console.WriteLine($"On Connected : {endPoint}");
+
+            byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to ERTServer");
+            Send(sendBuff);
+
+            Thread.Sleep(1000);
+            Disconnect();
+        }
+
+        public override void OnDisconnected(EndPoint endPoint)
+        {
+            Console.WriteLine($"On Disconnected : {endPoint}");
+        }
+
+        public override void OnRecv(ArraySegment<byte> buffer)
+        {
+            string recvdata = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count); // Offset : 시작 위치, ByteTransferred : 몇 바이트 받았냐
+            Console.WriteLine($"[From Server] : {recvdata}");
+        }
+
+        public override void OnSend(int numOfBytes)
+        {
+            Console.WriteLine($"Transferred bytes: {numOfBytes}");
+        }
+    }
     internal class Program
     {
         static Listener _listener = new Listener();
-        static void OnAcceptHandler(Socket clientSocket)
-        {
-            try
-            {
-                Session session = new Session();
-                session.Start(clientSocket);
-
-                byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to ERTServer");
-                session.Send(sendBuff);
-
-                Thread.Sleep(1000);
-                session.Disconnect(); // 쫒아내기
-            }
-            catch (Exception e)
-            {
-                    Console.WriteLine(e.ToString());
-            }
-        }
+        
         static void Main(string[] args)
         {
             // DNS를 이용해 구현하겠음
@@ -35,7 +48,7 @@ namespace ServerCore
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 8080); // ip의 최종 주소임, 두번째 인자는 포트 값
             // GetHostEntry를 통해 DNS 주소를 아이피 주소로 찾음
 
-            _listener.init(endPoint,OnAcceptHandler);
+            _listener.init(endPoint, () => { return new GameSession(); });
             while (true)
             {
                     ;
